@@ -16,75 +16,64 @@ const torsoSlider = document.getElementById("torsoSlider");
 const armSlider = document.getElementById("armSlider");
 const legSlider = document.getElementById("legSlider");
 
-// Bones
-const root = new THREE.Bone();
-const spine = new THREE.Bone();
-const head = new THREE.Bone();
-const armL = new THREE.Bone();
-const armR = new THREE.Bone();
-const legL = new THREE.Bone();
-const legR = new THREE.Bone();
+// Create body parts
+const torso = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.8, 0.8, 2, 16),
+  new THREE.MeshStandardMaterial({ color: 0xcccccc })
+);
+scene.add(torso);
 
-root.add(spine);
-spine.add(head);
-spine.add(armL);
-spine.add(armR);
-root.add(legL);
-root.add(legR);
+const head = new THREE.Mesh(
+  new THREE.SphereGeometry(0.5, 16, 16),
+  new THREE.MeshStandardMaterial({ color: 0xaaaaaa })
+);
+scene.add(head);
 
-const skeleton = new THREE.Skeleton([root, spine, head, armL, armR, legL, legR]);
+const armL = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.3, 0.3, 1, 12),
+  new THREE.MeshStandardMaterial({ color: 0x999999 })
+);
+scene.add(armL);
 
-// Helper function
-function createLimb(geometry, color, bone) {
-  const material = new THREE.MeshStandardMaterial({ color, skinning: true });
-  const mesh = new THREE.SkinnedMesh(geometry, material);
-  mesh.add(bone);
-  mesh.bind(new THREE.Skeleton([bone]));
-  return mesh;
-}
+const armR = armL.clone();
+scene.add(armR);
 
-// Body parts
-const torsoGeo = new THREE.CylinderGeometry(0.8, 0.8, 2, 16);
-const torsoMesh = createLimb(torsoGeo, 0xcccccc, spine);
-scene.add(torsoMesh);
+const legL = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.4, 0.4, 1.5, 12),
+  new THREE.MeshStandardMaterial({ color: 0x999999 })
+);
+scene.add(legL);
 
-const headGeo = new THREE.SphereGeometry(0.5, 16, 16);
-const headMesh = createLimb(headGeo, 0xaaaaaa, head);
-scene.add(headMesh);
-
-const armGeo = new THREE.CylinderGeometry(0.3, 0.3, 1, 12);
-const armMeshL = createLimb(armGeo, 0x999999, armL);
-scene.add(armMeshL);
-
-const armMeshR = createLimb(armGeo, 0x999999, armR);
-scene.add(armMeshR);
-
-const legGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.5, 12);
-const legMeshL = createLimb(legGeo, 0x999999, legL);
-scene.add(legMeshL);
-
-const legMeshR = createLimb(legGeo, 0x999999, legR);
-scene.add(legMeshR);
+const legR = legL.clone();
+scene.add(legR);
 
 // Animate
 function animate() {
   requestAnimationFrame(animate);
 
-  // Update bone positions
-  spine.position.y = parseFloat(torsoSlider.value);
-  armL.position.set(-1.2, parseFloat(armSlider.value), 0);
-  armR.position.set(1.2, parseFloat(armSlider.value), 0);
-  legL.position.set(-0.5, -parseFloat(legSlider.value), 0);
-  legR.position.set(0.5, -parseFloat(legSlider.value), 0);
-  head.position.y = 1;
+  // Get slider values
+  const torsoHeight = parseFloat(torsoSlider.value);
+  const armLength = parseFloat(armSlider.value);
+  const legLength = parseFloat(legSlider.value);
 
-  // Update mesh positions
-  torsoMesh.position.y = spine.position.y / 2;
-  headMesh.position.y = spine.position.y + head.position.y;
-  armMeshL.position.set(armL.position.x, spine.position.y + armL.position.y, 0);
-  armMeshR.position.set(armR.position.x, spine.position.y + armR.position.y, 0);
-  legMeshL.position.set(legL.position.x, root.position.y + legL.position.y, 0);
-  legMeshR.position.set(legR.position.x, root.position.y + legR.position.y, 0);
+  // Update torso
+  torso.scale.y = torsoHeight / 2;
+  torso.position.y = torsoHeight / 2;
+
+  // Update head
+  head.position.y = torso.position.y + torso.geometry.parameters.height * torso.scale.y / 2 + 0.6;
+
+  // Update arms
+  armL.scale.y = armLength;
+  armL.position.set(-1.2, torso.position.y + 0.5, 0);
+  armR.scale.y = armLength;
+  armR.position.set(1.2, torso.position.y + 0.5, 0);
+
+  // Update legs
+  legL.scale.y = legLength;
+  legL.position.set(-0.5, torso.position.y - torso.geometry.parameters.height * torso.scale.y / 2 - legLength / 2, 0);
+  legR.scale.y = legLength;
+  legR.position.set(0.5, torso.position.y - torso.geometry.parameters.height * torso.scale.y / 2 - legLength / 2, 0);
 
   // Movement
   armL.rotation.z = Math.sin(Date.now() * 0.002) * 0.5;
